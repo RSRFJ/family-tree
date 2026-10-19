@@ -1,0 +1,20 @@
+# Attribution / 来源声明
+
+This repository is a **modified version** of **qiaoshouqing/familytree**:
+
+- Original project: https://github.com/qiaoshouqing/familytree
+- License: MIT
+- Copyright (c) 2025 qiaoshouqing
+
+The original project provided the initial Next.js family-tree viewer and the
+sample dataset used in `seed/family-data.json`. This repository keeps that
+lineage and **substantially modifies** it: PostgreSQL storage, authentication
+and roles, CRUD, audit logging, backups and a responsive admin UI.
+
+本仓库是 [qiaoshouqing/familytree](https://github.com/qiaoshouqing/familytree)
+的**修改版本**，并非原创项目。原项目（MIT，Copyright (c) 2025 qiaoshouqing）
+提供了 Next.js 家谱展示思路与示例数据；本仓库在此基础上重写了数据存储、
+鉴权与权限、增删改查、审计日志、备份和响应式管理界面。
+
+The original MIT license text is reproduced in `LICENSE-UPSTREAM` and also
+available at https://github.com/qiaoshouqing/familytree/blob/main/LICENSE

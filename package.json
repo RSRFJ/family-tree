@@ -1,0 +1,23 @@
+{
+  "name": "familytree",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "migrate": "node scripts/migrate.mjs",
+    "seed": "node scripts/seed.mjs"
+  },
+  "dependencies": {
+    "next": "15.5.28",
+    "pg": "8.13.1",
+    "react": "19.0.1",
+    "react-dom": "19.0.1"
+  },
+  "description": "Self-hosted Chinese family tree with preview codes, admin roles, audit log and backups.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  }
+}

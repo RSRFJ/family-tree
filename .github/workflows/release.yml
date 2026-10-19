@@ -1,0 +1,61 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build images
+        run: |
+          docker build --target runner -t familytree-web:1.0.0 .
+          docker build -f docker/tools/Dockerfile -t familytree-tools:1.0.0 .
+          docker build -t familytree-backup:1.0.0 docker/backup
+          docker pull postgres:17-alpine
+
+      - name: Package release assets
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          docker save \
+            familytree-web:1.0.0 \
+            familytree-tools:1.0.0 \
+            familytree-backup:1.0.0 \
+            postgres:17-alpine | gzip -9 > "familytree-${TAG}-images.tar.gz"
+          cp compose.release.yaml compose.yaml
+          cp .env.example default.env.example
+          sha256sum "familytree-${TAG}-images.tar.gz" > SHA256SUMS
+          ls -lh "familytree-${TAG}-images.tar.gz"
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          gh release delete "$TAG" --yes || true
+          gh release create "$TAG" \
+            --title "v1.0.0" \
+            --notes "Family Tree v1.0.0
+
+          - Default admin: admin / admin
+          - Default preview code: welcome
+          - Change both immediately after the first login.
+          - For production, put it behind HTTPS and set COOKIE_SECURE=1 / TRUST_PROXY=1.
+
+          Docker (offline): docker load -i familytree-${TAG}-images.tar.gz, then docker compose up -d.
+          Docs: https://github.com/RSRFJ/family-tree/blob/main/docs/HTTPS.md" \
+            "familytree-${TAG}-images.tar.gz" \
+            compose.yaml \
+            default.env.example \
+            README-DOCKER.md \
+            SHA256SUMS

@@ -1,0 +1,29 @@
+# dependencies / build
+node_modules/
+.next/
+out/
+build/
+dist/
+
+# env & secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.secrets/
+
+# runtime data
+data/
+*.dump
+*.sql.gz
+
+# logs / OS
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# editor
+.vscode/
+.idea/

@@ -1,0 +1,85 @@
+name: familytree
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-familytree}
+      POSTGRES_USER: ${POSTGRES_USER:-familytree}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    shm_size: 256mb
+    security_opt: ["no-new-privileges:true"]
+
+  migrate:
+    build:
+      context: .
+      target: migrator
+    image: familytree-tools:local
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  seed:
+    build:
+      context: .
+      target: migrator
+    image: familytree-tools:local
+    command: ["node", "scripts/seed.mjs", "/seed/family-data.json"]
+    env_file: .env
+    volumes:
+      - ./seed:/seed:ro
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+
+  web:
+    build:
+      context: .
+      target: runner
+    image: familytree-web:local
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+    ports:
+      - "${WEB_PORT:-3001}:3000"
+    volumes:
+      - ./data/uploads:/app/uploads
+      - ./data/backups:/app/backups:ro
+    group_add: ["1001"]
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  backup:
+    build: ./docker/backup
+    image: familytree-backup:local
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER:-familytree}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?}
+      PGDATABASE: ${POSTGRES_DB:-familytree}
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - ./data/backups:/backups
+    depends_on:
+      db:
+        condition: service_healthy
